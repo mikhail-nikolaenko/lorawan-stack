@@ -70,6 +70,8 @@ func (m *ScheduledDownlinkMatcher) Match(ctx context.Context, ack *ttnpb.TxAckno
 		return nil, errMissingDownlinkCorrelationID.New()
 	}
 	pb := &ttnpb.DownlinkMessage{}
+	// TODO: Redis 6.2.0 introduces `GETDEL`, which can be used to delete the old downlink message after retrieving.
+	// https://github.com/TheThingsNetwork/lorawan-stack/issues/3592
 	if err := ttnredis.GetProto(ctx, m.Redis, m.cidToKey(cid)).ScanProto(pb); err != nil {
 		return nil, errNoDownlinkMatch.WithCause(err)
 	}
