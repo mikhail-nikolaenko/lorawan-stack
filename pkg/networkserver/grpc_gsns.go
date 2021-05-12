@@ -1273,5 +1273,27 @@ func (ns *NetworkServer) HandleUplink(ctx context.Context, up *ttnpb.UplinkMessa
 // ReportTxAcknowledgment is called by the Gateway Server when a tx acknowledgment arrives.
 func (ns *NetworkServer) ReportTxAcknowledgment(ctx context.Context, up *ttnpb.GatewayTxAcknowledgment) (_ *pbtypes.Empty, err error) {
 	// TODO: Send ApplicationDownlinkSent event from Tx acknowledgment (https://github.com/TheThingsNetwork/lorawan-stack/issues/56)
+	ack := up.GetTxAck()
+	if ack.GetResult() != ttnpb.TxAcknowledgment_SUCCESS {
+		return ttnpb.Empty, nil
+	}
+	down, err := ns.scheduledDownlinkMatcher.Match(ctx, up.GetTxAck())
+	if err != nil {
+		return nil, err
+	}
+	pld := down.GetPayload().GetMACPayload()
+	if pld == nil {
+		return ttnpb.Empty, nil
+	}
+	ns.enqueueApplicationUplinks(ctx, &ttnpb.ApplicationUp{
+		Up: &ttnpb.ApplicationUp_DownlinkSent{
+			DownlinkSent: &ttnpb.ApplicationDownlink{
+				FRMPayload:     pld.FRMPayload,
+				FPort:          pld.FPort,
+				FCnt:           pld.FullFCnt,
+				CorrelationIDs: down.GetCorrelationIDs(),
+			},
+		},
+	})
 	return ttnpb.Empty, nil
 }

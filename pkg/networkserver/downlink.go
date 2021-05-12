@@ -918,6 +918,16 @@ func (ns *NetworkServer) scheduleDownlinkByPaths(ctx context.Context, req *sched
 			continue
 		}
 		transmitAt := time.Now().Add(delay)
+		if err := ns.scheduledDownlinkMatcher.Add(ctx, &ttnpb.DownlinkMessage{
+			CorrelationIDs: events.CorrelationIDsFromContext(ctx),
+			EndDeviceIDs:   &req.EndDeviceIdentifiers,
+			Payload:        req.Payload,
+			Settings: &ttnpb.DownlinkMessage_Request{
+				Request: req.TxRequest,
+			},
+		}); err != nil {
+			logger.WithError(err).Debug("Failed to store downlink metadata")
+		}
 		logger.WithFields(log.Fields(
 			"transmission_delay", delay,
 			"transmit_at", transmitAt,
