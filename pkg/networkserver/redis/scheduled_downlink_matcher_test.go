@@ -35,14 +35,14 @@ func TestScheduledDownlinkMatcher(t *testing.T) {
 
 	ids := &ttnpb.EndDeviceIdentifiers{
 		ApplicationIdentifiers: ttnpb.ApplicationIdentifiers{
-			ApplicationID: "app1",
+			ApplicationId: "app1",
 		},
-		DeviceID: "dev1",
+		DeviceId: "dev1",
 	}
 
 	stored := &ttnpb.DownlinkMessage{
 		RawPayload:   []byte{1, 2, 3},
-		EndDeviceIDs: ids,
+		EndDeviceIds: ids,
 		Settings: &ttnpb.DownlinkMessage_Request{
 			Request: &ttnpb.TxRequest{
 				Class: ttnpb.CLASS_A,

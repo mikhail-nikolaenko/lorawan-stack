@@ -920,7 +920,7 @@ func (ns *NetworkServer) scheduleDownlinkByPaths(ctx context.Context, req *sched
 		transmitAt := time.Now().Add(delay)
 		if err := ns.scheduledDownlinkMatcher.Add(ctx, &ttnpb.DownlinkMessage{
 			CorrelationIDs: events.CorrelationIDsFromContext(ctx),
-			EndDeviceIDs:   &req.EndDeviceIdentifiers,
+			EndDeviceIds:   &req.EndDeviceIdentifiers,
 			Payload:        req.Payload,
 			Settings: &ttnpb.DownlinkMessage_Request{
 				Request: req.TxRequest,
