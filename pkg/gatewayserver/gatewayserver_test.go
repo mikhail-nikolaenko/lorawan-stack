@@ -846,7 +846,6 @@ func TestGatewayServer(t *testing.T) {
 									SNR:                11,
 								},
 							},
-							RawPayload: randomUpDataPayload(types.DevAddr{0x26, 0x01, 0xff, 0xff}, 1, 6),
 						},
 					},
 				}
@@ -895,6 +894,7 @@ func TestGatewayServer(t *testing.T) {
 								} else {
 									up.UplinkMessages[0].RxMetadata[0].Location = nil
 								}
+								up.UplinkMessages[0].RawPayload = randomUpDataPayload(types.DevAddr{0x26, 0x01, 0xff, 0xff}, 1, 6)
 
 								select {
 								case upCh <- up:
@@ -943,6 +943,8 @@ func TestGatewayServer(t *testing.T) {
 			})
 			location := &gtw.Antennas[0].Location
 
+			duplicatePayload := randomUpDataPayload(types.DevAddr{0x26, 0x01, 0xff, 0xff}, 1, 6)
+
 			t.Run("Upstream", func(t *testing.T) {
 				uplinkCount := 0
 				for _, tc := range []struct {
@@ -950,6 +952,7 @@ func TestGatewayServer(t *testing.T) {
 					Up             *ttnpb.GatewayUp
 					Forwards       []uint32 // Timestamps of uplink messages in Up that are being forwarded.
 					PublicLocation bool     // If gateway location is public, it should be in RxMetadata
+					UplinkCount    int      // Number of expected uplinks
 				}{
 					{
 						Name: "GatewayStatus",
@@ -1000,6 +1003,67 @@ func TestGatewayServer(t *testing.T) {
 							},
 						},
 						Forwards: []uint32{100},
+					},
+					{
+						Name: "OneValidLoRaAndOneDuplicate",
+						Up: &ttnpb.GatewayUp{
+							UplinkMessages: []*ttnpb.UplinkMessage{
+								{
+									Settings: ttnpb.TxSettings{
+										DataRate: ttnpb.DataRate{
+											Modulation: &ttnpb.DataRate_LoRa{
+												LoRa: &ttnpb.LoRaDataRate{
+													SpreadingFactor: 7,
+													Bandwidth:       250000,
+												},
+											},
+										},
+										CodingRate: "4/5",
+										Frequency:  867900000,
+										Timestamp:  100,
+									},
+									RxMetadata: []*ttnpb.RxMetadata{
+										{
+											GatewayIdentifiers: ids,
+											Timestamp:          100,
+											RSSI:               -69,
+											ChannelRSSI:        -69,
+											SNR:                11,
+											Location:           location,
+										},
+									},
+									RawPayload: duplicatePayload,
+								},
+								{
+									Settings: ttnpb.TxSettings{
+										DataRate: ttnpb.DataRate{
+											Modulation: &ttnpb.DataRate_LoRa{
+												LoRa: &ttnpb.LoRaDataRate{
+													SpreadingFactor: 7,
+													Bandwidth:       250000,
+												},
+											},
+										},
+										CodingRate: "4/5",
+										Frequency:  867900000,
+										Timestamp:  101,
+									},
+									RxMetadata: []*ttnpb.RxMetadata{
+										{
+											GatewayIdentifiers: ids,
+											Timestamp:          101,
+											RSSI:               -42,
+											ChannelRSSI:        -42,
+											SNR:                11,
+											Location:           location,
+										},
+									},
+									RawPayload: duplicatePayload,
+								},
+							},
+						},
+						Forwards:    []uint32{100},
+						UplinkCount: 1,
 					},
 					{
 						Name: "OneValidFSK",
@@ -1151,7 +1215,9 @@ func TestGatewayServer(t *testing.T) {
 						case <-time.After(timeout):
 							t.Fatalf("Failed to send message to upstream channel")
 						}
-						if ptc.DetectsInvalidMessages {
+						if tc.UplinkCount > 0 {
+							uplinkCount += tc.UplinkCount
+						} else if ptc.DetectsInvalidMessages {
 							uplinkCount += len(tc.Forwards)
 						} else {
 							uplinkCount += len(tc.Up.UplinkMessages)

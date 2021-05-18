@@ -15,6 +15,7 @@
 package io
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"sync/atomic"
@@ -99,6 +100,14 @@ type Connection struct {
 
 	statsChangedCh chan struct{}
 	locCh          chan struct{}
+
+	lastUplinkMessage *uplinkMessage
+}
+
+type uplinkMessage struct {
+	payload     []byte
+	frequency   uint64
+	antennaMask uint64
 }
 
 var (
@@ -185,6 +194,12 @@ var errBufferFull = errors.DefineInternal("buffer_full", "buffer is full")
 
 // HandleUp updates the uplink stats and sends the message to the upstream channel.
 func (c *Connection) HandleUp(up *ttnpb.UplinkMessage) error {
+	uplink := uplinkMessageFromProto(up)
+	if isDuplicateUplink(c.lastUplinkMessage, uplink) {
+		return nil
+	}
+	c.lastUplinkMessage = uplink
+
 	var ct scheduling.ConcentratorTime
 	if up.Settings.Time != nil {
 		ct = c.scheduler.SyncWithGatewayAbsolute(up.Settings.Timestamp, up.ReceivedAt, *up.Settings.Time)
@@ -660,4 +675,29 @@ func (c *Connection) notifyStatsChanged() {
 	case c.statsChangedCh <- struct{}{}:
 	default:
 	}
+}
+
+func uplinkMessageFromProto(pb *ttnpb.UplinkMessage) *uplinkMessage {
+	up := &uplinkMessage{
+		payload:   pb.GetRawPayload(),
+		frequency: pb.GetSettings().Frequency,
+	}
+	for _, md := range pb.GetRxMetadata() {
+		up.antennaMask = up.antennaMask | (1 << md.GetAntennaIndex())
+	}
+	return up
+}
+
+func isDuplicateUplink(this *uplinkMessage, that *uplinkMessage) bool {
+	switch {
+	case this == nil || that == nil:
+		return false
+	case this.frequency != that.frequency:
+		return false
+	case this.antennaMask != that.antennaMask:
+		return false
+	case !bytes.Equal(this.payload, that.payload):
+		return false
+	}
+	return true
 }
