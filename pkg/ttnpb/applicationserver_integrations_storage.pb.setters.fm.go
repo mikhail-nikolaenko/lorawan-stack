@@ -127,6 +127,15 @@ func (dst *GetStoredApplicationUpRequest) SetFields(src *GetStoredApplicationUpR
 				var zero types.FieldMask
 				dst.FieldMask = zero
 			}
+		case "last":
+			if len(subs) > 0 {
+				return fmt.Errorf("'last' has no subfields, but %s were specified", subs)
+			}
+			if src != nil {
+				dst.Last = src.Last
+			} else {
+				dst.Last = nil
+			}
 
 		default:
 			return fmt.Errorf("invalid field: '%s'", name)

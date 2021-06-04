@@ -152,6 +152,18 @@ func (m *GetStoredApplicationUpRequest) ValidateFields(paths ...string) error {
 				}
 			}
 
+		case "last":
+
+			if v, ok := interface{}(m.GetLast()).(interface{ ValidateFields(...string) error }); ok {
+				if err := v.ValidateFields(subs...); err != nil {
+					return GetStoredApplicationUpRequestValidationError{
+						field:  "last",
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
 		default:
 			return GetStoredApplicationUpRequestValidationError{
 				field:  name,
