@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	pbtypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/pflag"
@@ -37,6 +38,7 @@ func getStoredUpFlags() *pflag.FlagSet {
 	flags.Uint32("limit", 0, "limit number of upstream messages to fetch")
 	flags.AddFlagSet(timestampFlags("after", "query upstream messages after specified timestamp"))
 	flags.AddFlagSet(timestampFlags("before", "query upstream messages before specified timestamp"))
+	flags.Duration("last", 0, "query upstream messages in the last hours or minutes")
 
 	flags.AddFlagSet(applicationUpFlags)
 
@@ -61,6 +63,17 @@ func getStoredUpRequest(flags *pflag.FlagSet) (*ttnpb.GetStoredApplicationUpRequ
 	req.Before, err = getTimestampFlags(flags, "before")
 	if err != nil {
 		return nil, err
+	}
+	if flags.Changed("last") {
+		if req.After != nil || req.Before != nil {
+			return nil, fmt.Errorf("--last cannot be used with --after or --before")
+		}
+		d, err := flags.GetDuration("last")
+		if err != nil {
+			return nil, err
+		}
+		t := time.Now().Add(-d)
+		req.After = &t
 	}
 	req.Order, _ = flags.GetString("order")
 	req.Type, _ = flags.GetString("type")
