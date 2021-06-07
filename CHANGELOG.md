@@ -11,6 +11,8 @@ For details about compatibility between different releases, see the **Commitment
 
 ### Added
 
+- Hard delete option to delete applications, gateways and organizations in the Console.
+
 ### Changed
 
 - Relaxed the cookie policy for cross-origin requests from Strict to Lax.
