@@ -53,7 +53,7 @@ message GetStoredApplicationUpRequest {
   google.protobuf.UInt32Value limit = 4;
   // Query upstream messages after this timestamp only. Cannot be used in conjunction with last.
   google.protobuf.Timestamp after = 5 [(gogoproto.nullable) = true, (gogoproto.stdtime) = true];
-  // Query upstream messages before this timestamp only. Cannot be used in conjuction with last.
+  // Query upstream messages before this timestamp only. Cannot be used in conjunction with last.
   google.protobuf.Timestamp before = 6 [(gogoproto.nullable) = true, (gogoproto.stdtime) = true];
   // Query uplinks on a specific FPort only.
   google.protobuf.UInt32Value f_port = 7;

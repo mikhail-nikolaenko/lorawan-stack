@@ -49,7 +49,7 @@ type GetStoredApplicationUpRequest struct {
 	Limit *types.UInt32Value `protobuf:"bytes,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Query upstream messages after this timestamp only. Cannot be used in conjunction with last.
 	After *time.Time `protobuf:"bytes,5,opt,name=after,proto3,stdtime" json:"after,omitempty"`
-	// Query upstream messages before this timestamp only. Cannot be used in conjuction with last.
+	// Query upstream messages before this timestamp only. Cannot be used in conjunction with last.
 	Before *time.Time `protobuf:"bytes,6,opt,name=before,proto3,stdtime" json:"before,omitempty"`
 	// Query uplinks on a specific FPort only.
 	FPort *types.UInt32Value `protobuf:"bytes,7,opt,name=f_port,json=fPort,proto3" json:"f_port,omitempty"`

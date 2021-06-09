@@ -2495,7 +2495,7 @@
             },
             {
               "name": "before",
-              "description": "Query upstream messages before this timestamp only. Cannot be used in conjuction with last.",
+              "description": "Query upstream messages before this timestamp only. Cannot be used in conjunction with last.",
               "label": "",
               "type": "Timestamp",
               "longType": "google.protobuf.Timestamp",
